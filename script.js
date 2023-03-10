@@ -1,21 +1,32 @@
 "use strict";
 
-const gameGridEl = document.getElementById('game-grid');
-const arrowRowEl = document.getElementById('arrow-row');
-// const onePlayerButton = document.getElementById('one-player-button');
-// const twoPlayerButton = document.getElementById('two-player-button');
-const chooseNumPlayers = document.getElementById('choose-num-players');
-const namePlayers = document.getElementById('name-players');
+const gameGridEl = document.getElementsByClassName('game-grid')[0];
+const arrowRowEl = document.getElementsByClassName('arrow-row')[0];
+const chooseNumPlayers = document.getElementsByClassName('choose-num-players')[0];
+const namePlayers = document.getElementsByClassName('name-players')[0];
 
 let numPlayers = 0;
+let hasChosenNumPlayers = false;
 let gameInProgress = false;
 
-const gameGrid = {
-    gameState: [],
-    addPiece: function(color, column) {
-
-    }
+const game = {
+    gridState: [],
+    players: {
+        player1: {
+            name: '',
+            addPiece: function(column) {
+    
+            }
+        },
+        player2: {
+            name: '',
+            addPiece: function(column) {
+    
+            }
+        },
+    },
 }
+
 buildInitialState();
 
 function makeRow() {
@@ -44,16 +55,22 @@ function makeArrows() {
     }
 }
 
+function setName(playerEl, nameInput) {
+    const nameInputs = playerEl.getElementsByClassName('name-inputs')[0];
+    nameInputs.classList.add('display-none');
+    playerEl.appendChild();
+}
+
 function numPlayersPress(event) {
     const clickedEl = event.target;
     if (clickedEl.tagName === 'BUTTON') {
-        if (clickedEl.id === 'one-player-button') {
+        if (clickedEl.className === 'one-player-button') {
             numPlayers = 1;
         }
         else {
             numPlayers = 2;
         }
-        
+        hasChosenNumPlayers = true;
         renderState();
     }
 }
@@ -68,13 +85,17 @@ function buildInitialState() {
     }
 }
 
+function resetState() {
+    // reset the game
+}
+
 // render
 function renderState() {
-    if (namePlayers.style.display !== 'block') {
-        namePlayers.style.display = 'block';
-        chooseNumPlayers.style.display = 'none';
+    if (hasChosenNumPlayers && !gameInProgress) {
+        namePlayers.classList.replace('display-none', 'display-block');
+        chooseNumPlayers.classList.replace('display-flex', 'display-none');
         if (numPlayers === 1) {
-            
+
         }
     }
 

@@ -11,23 +11,27 @@
     <header>
         <h1>Connect Four</h1>
     </header>
-    <div id="arrow-row"></div>
-    <table id="game-grid"></table>
-    <div id="choose-num-players">
+    <div class="arrow-row"></div>
+    <table class="game-grid"></table>
+    <div class="choose-num-players display-flex">
         <h3>Choose number of players:</h3>
-        <button id="one-player-button" class="num-player-button" type="button">One Player</button>
-        <button id="two-player-button" class="num-player-button" type="button">Two Players</button>
+        <button class="one-player-button num-player-button" type="button">One Player</button>
+        <button class="two-player-button num-player-button" type="button">Two Players</button>
     </div>
-    <div id="name-players">
-        <div id="player1" class="player">
+    <div class="name-players display-none">
+        <div class="player player1">
             <div>Player 1:</div>
-            <input class="name-input" type="text" placeholder="Enter Name Here"/>
-            <button class="name-submit" type="button">Submit</button>
+            <div class="name-inputs">
+                <input class="name-text-input" type="text" placeholder="Enter Name Here"/>
+                <button class="name-submit" type="button">Submit</button>
+            </div>
         </div>
-        <div id="player2" class="player">
+        <div class="player player2">
             <div>Player 2:</div>
-            <input class="name-input" type="text" placeholder="Enter Name Here"/>
-            <button class="name-submit" type="button">Submit</button>
+            <div class="name-inputs">
+                <input class="name-text-input" type="text" placeholder="Enter Name Here"/>
+                <button class="name-submit" type="button">Submit</button>
+            </div>
         </div>
     </div>
 </body>

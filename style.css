@@ -14,12 +14,19 @@ button {
     color: black;
 }
 
-#name-players {
+.display-none {
     display: none;
 }
 
-#choose-num-players {
+.display-block {
+    display: block;
+}
+
+.display-flex {
     display: flex;
+}
+
+.choose-num-players {
     flex-direction: column;
 }
 
@@ -33,7 +40,7 @@ button {
 
 
 /* Arrow row styles */
-#arrow-row {
+.arrow-row {
     display: flex;
     width: 595px;
     margin-bottom: 10px;
@@ -63,7 +70,7 @@ button {
 
 
 /* Game grid styles */
-#game-grid {
+.game-grid {
     width: 605px;
     background-color: blue;
     border-spacing: 10px;
