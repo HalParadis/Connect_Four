@@ -18,7 +18,6 @@ const gameGrid = {
 }
 buildInitialState();
 
-// copied from pixalate project
 function makeRow() {
     const newRow = document.createElement('tr');
     for (let i = 0; i < 7; i++) {
@@ -47,7 +46,7 @@ function makeArrows() {
 
 function numPlayersPress(event) {
     const clickedEl = event.target;
-    if (clickedEl.tagName === 'button') {
+    if (clickedEl.tagName === 'BUTTON') {
         if (clickedEl.id === 'one-player-button') {
             numPlayers = 1;
         }
@@ -71,12 +70,15 @@ function buildInitialState() {
 
 // render
 function renderState() {
-    if (namePlayers.display === 'none') {
-        namePlayers.display = 'flex';
-        chooseNumPlayers.display = 'none';
+    if (namePlayers.style.display !== 'block') {
+        namePlayers.style.display = 'block';
+        chooseNumPlayers.style.display = 'none';
+        if (numPlayers === 1) {
+            
+        }
     }
 
-    
+
 }
 
 // maybe a dozen or so helper functions for tiny pieces of the interface
@@ -87,10 +89,4 @@ function onBoardClick() {
 }
 
 // event listeners
-
-// onePlayerButton.addEventListener('click', () => {
-//     numPlayers = 1;
-//     renderState();
-// })
-
 chooseNumPlayers.addEventListener('click', numPlayersPress);

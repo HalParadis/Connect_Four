@@ -27,6 +27,10 @@ button {
     margin: .5em;
 }
 
+.player {
+    margin: 1em;
+}
+
 
 /* Arrow row styles */
 #arrow-row {
