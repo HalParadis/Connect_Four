@@ -2,26 +2,31 @@
 
 const gameGridEl = document.getElementsByClassName('game-grid')[0];
 const arrowRowEl = document.getElementsByClassName('arrow-row')[0];
-const chooseNumPlayers = document.getElementsByClassName('choose-num-players')[0];
-const namePlayers = document.getElementsByClassName('name-players')[0];
+const chooseNumPlayersContainer = document.getElementsByClassName('choose-num-players-container')[0];
+const namePlayersContainer = document.getElementsByClassName('name-players-container')[0];
 
 let numPlayers = 0;
 let hasChosenNumPlayers = false;
-let gameInProgress = false;
+let hasEnteredNames = false;
 
 const game = {
-    gridState: [],
+    gridState: [[{
+        row: 0,
+        column: 0,
+        contains: 'nothing'
+    }]
+    ],
     players: {
         player1: {
             name: '',
-            addPiece: function(column) {
-    
+            addPiece: function (column) {
+
             }
         },
         player2: {
             name: '',
-            addPiece: function(column) {
-    
+            addPiece: function (column) {
+
             }
         },
     },
@@ -29,10 +34,14 @@ const game = {
 
 buildInitialState();
 
+// adds a row to the game grid
 function makeRow() {
-    const newRow = document.createElement('tr');
+    const newRow = document.createElement('div');
+    newRow.classList.add('grid-row', 'display-flex');
     for (let i = 0; i < 7; i++) {
-        newRow.appendChild(document.createElement('td'));
+        let gridSpace = document.createElement('div');
+        gridSpace.classList.add('grid-space');
+        newRow.appendChild(gridSpace);
     }
     gameGridEl.appendChild(newRow);
 }
@@ -55,16 +64,21 @@ function makeArrows() {
     }
 }
 
-function setName(playerEl, nameInput) {
-    const nameInputs = playerEl.getElementsByClassName('name-inputs')[0];
-    nameInputs.classList.add('display-none');
-    playerEl.appendChild();
+// removes name inputs, creates new element containing provided name
+function setName(playerNameContainer, nameInput) {
+    const nameInputsContainer = playerNameContainer.getElementsByClassName('name-inputs-container')[0];
+    nameInputsContainer.classList.add('display-none');
+    const nameEl = document.createElement('span');
+    nameEl.innerText = nameInput;
+    playerNameContainer.appendChild(nameEl);
+    playerNameContainer.classList.add('display-flex');
 }
 
+// called function when number of players is chosen
 function numPlayersPress(event) {
     const clickedEl = event.target;
     if (clickedEl.tagName === 'BUTTON') {
-        if (clickedEl.className === 'one-player-button') {
+        if (clickedEl.classList[0] === 'one-player-button') {
             numPlayers = 1;
         }
         else {
@@ -91,23 +105,25 @@ function resetState() {
 
 // render
 function renderState() {
-    if (hasChosenNumPlayers && !gameInProgress) {
-        namePlayers.classList.replace('display-none', 'display-block');
-        chooseNumPlayers.classList.replace('display-flex', 'display-none');
+    if (hasChosenNumPlayers && !hasEnteredNames) {
+        namePlayersContainer.classList.replace('display-none', 'display-block');
+        chooseNumPlayersContainer.classList.replace('display-flex', 'display-none');
         if (numPlayers === 1) {
-
+            setName(namePlayersContainer.lastElementChild, 'Computer');
         }
     }
-
+    else if (hasEnteredNames) {
+        
+    }
 
 }
 
 // maybe a dozen or so helper functions for tiny pieces of the interface
 function onBoardClick() {
-  // update state, maybe with another dozen or so helper functions...
+    // update state, maybe with another dozen or so helper functions...
 
-  renderState() // show the user the new state
+    renderState() // show the user the new state
 }
 
 // event listeners
-chooseNumPlayers.addEventListener('click', numPlayersPress);
+chooseNumPlayersContainer.addEventListener('click', numPlayersPress);

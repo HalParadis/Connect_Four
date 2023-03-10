@@ -26,7 +26,7 @@ button {
     display: flex;
 }
 
-.choose-num-players {
+.choose-num-players-container {
     flex-direction: column;
 }
 
@@ -34,8 +34,12 @@ button {
     margin: .5em;
 }
 
-.player {
+.player-name-container {
     margin: 1em;
+}
+
+.player-name-container > * {
+    margin-right: 5px;
 }
 
 
@@ -71,14 +75,14 @@ button {
 
 /* Game grid styles */
 .game-grid {
-    width: 605px;
     background-color: blue;
-    border-spacing: 10px;
+    padding: 5px;
 }
 
-td {
+.grid-space {
     background-color: rgb(214, 202, 202);
     width: 75px;
     height: 75px;
     border-radius: 100%;
+    margin: 5px;
 }
