@@ -1,38 +1,35 @@
 "use strict";
 
-const gameGridEl = document.getElementsByClassName('game-grid')[0];
-const arrowRowEl = document.getElementsByClassName('arrow-row')[0];
-const chooseNumPlayersContainer = document.getElementsByClassName('choose-num-players-container')[0];
-const namePlayersContainer = document.getElementsByClassName('name-players-container')[0];
-
-let numPlayers = 0;
-let hasChosenNumPlayers = false;
-let hasEnteredNames = false;
+const gameGridEl = document.getElementById('game-grid');
+const arrowRowEl = document.getElementById('arrow-row');
+const chooseNumPlayersContainer = document.getElementById('choose-num-players-container');
+const namePlayersContainer = document.getElementById('name-players-container');
 
 const game = {
+    numPlayers: 0,
+    numThatHaveInputName: 0,
+    allNamesFilled: false,
     gridState: [[{
         row: 0,
         column: 0,
         contains: 'nothing'
     }]
     ],
-    players: {
-        player1: {
-            name: '',
-            addPiece: function (column) {
+    player1: {
+        name: '',
+        addPiece: function (column) {
 
-            }
-        },
-        player2: {
-            name: '',
-            addPiece: function (column) {
+        }
+    },
+    player2: {
+        name: '',
+        addPiece: function (column) {
 
-            }
-        },
+        }
     },
 }
 
-buildInitialState();
+initialRender();
 
 // adds a row to the game grid
 function makeRow() {
@@ -65,31 +62,44 @@ function makeArrows() {
 }
 
 // removes name inputs, creates new element containing provided name
-function setName(playerNameContainer, nameInput) {
-    const nameInputsContainer = playerNameContainer.getElementsByClassName('name-inputs-container')[0];
+function setName(playerNameSubContainer, nameInput) {
+    const nameInputsContainer = playerNameSubContainer.getElementsByClassName('name-inputs-container')[0];
     nameInputsContainer.classList.add('display-none');
     const nameEl = document.createElement('span');
     nameEl.innerText = nameInput;
-    playerNameContainer.appendChild(nameEl);
-    playerNameContainer.classList.add('display-flex');
+    playerNameSubContainer.appendChild(nameEl);
+    playerNameSubContainer.classList.add('display-flex');
 }
 
 // called function when number of players is chosen
 function numPlayersPress(event) {
     const clickedEl = event.target;
     if (clickedEl.tagName === 'BUTTON') {
-        if (clickedEl.classList[0] === 'one-player-button') {
-            numPlayers = 1;
+        if (clickedEl.id === 'one-player-button') {
+            game.numPlayers = 1;
+            game.player2.name = 'Computer';
         }
         else {
-            numPlayers = 2;
+            game.numPlayers = 2;
         }
-        hasChosenNumPlayers = true;
         renderState();
     }
 }
 
-function buildInitialState() {
+function nameSubmit(event) {
+    if ([...event.target.classList].includes('name-submit')) {
+        game.numThatHaveInputName++;
+        if (event.target.parentElement.id === "player1-name-inputs-container") {
+            game.player1.name = event.target.previousElementSibling.value;
+        }
+        else {
+            game.player2.name = event.target.previousElementSibling.value;
+        }
+        renderState();
+    }
+}
+
+function initialRender() {
     // create arrow row
     makeArrows();
 
@@ -105,15 +115,24 @@ function resetState() {
 
 // render
 function renderState() {
-    if (hasChosenNumPlayers && !hasEnteredNames) {
+    if (game.numPlayers && !game.numThatHaveInputName) {
         namePlayersContainer.classList.replace('display-none', 'display-block');
         chooseNumPlayersContainer.classList.replace('display-flex', 'display-none');
-        if (numPlayers === 1) {
-            setName(namePlayersContainer.lastElementChild, 'Computer');
+        if (game.numPlayers === 1) {
+            setName(namePlayersContainer.lastElementChild, game.player2.name);
         }
     }
-    else if (hasEnteredNames) {
-        
+    else if (!game.allNamesFilled) {
+        const playerNameSubContainers = namePlayersContainer.children;
+        if (game.player1.name && !playerNameSubContainers[0].getElementsByTagName('span')[0]) {
+            setName(playerNameSubContainers[0], game.player1.name);
+        }
+        if (game.player2.name && !playerNameSubContainers[1].getElementsByTagName('span')[0]) {
+            setName(playerNameSubContainers[1], game.player2.name);
+        }
+        if (game.numThatHaveInputName === game.numPlayers) {
+            game.allNamesFilled = true;
+        }
     }
 
 }
@@ -127,3 +146,4 @@ function onBoardClick() {
 
 // event listeners
 chooseNumPlayersContainer.addEventListener('click', numPlayersPress);
+namePlayersContainer.addEventListener('click', nameSubmit);

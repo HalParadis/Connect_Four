@@ -34,12 +34,16 @@ button {
     margin: .5em;
 }
 
-.player-name-container {
+.player-name-sub-container {
     margin: 1em;
 }
 
-.player-name-container > * {
+.player-name-sub-container > * {
     margin-right: 5px;
+}
+
+.name-text-input {
+    color: black;
 }
 
 

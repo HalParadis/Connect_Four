@@ -1,6 +1,6 @@
 As users playing a two player game we want to:
 
-[ ]    enter our names and have them displayed
+[X]    enter our names and have them displayed
 [ ]    have our order chosen for us by the game
 [ ]    take turns by dropping our chip into a column on the grid
 [ ]    not be able to drop a chip into a totally filled column
@@ -9,7 +9,7 @@ As users playing a two player game we want to:
 
 As a user playing a single player game I additionally want to:
 
-[ ]    see the name 'Computer' displayed as my opponent
+[X]    see the name 'Computer' displayed as my opponent
 [ ]    have the Computer player choose columns as if it were a human player
 
 As a user playing a single player game I would be delighted if:
