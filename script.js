@@ -89,18 +89,6 @@ function makeArrows() {
     }
 }
 
-// function buildRow() {
-//     const newRow = [];
-//     for (let i = 0; i < 7; i++) {
-//         newRow.push({
-//             row: 0,
-//             column: i,
-//             contains: 'nothing'
-//         });
-//     }
-//     return newRow;
-// }
-
 function buildInitialState() {
     for (let j = 0; j < 6; j++) {
         const newRow = [];
@@ -161,12 +149,6 @@ function renderState() {
         if (game.numThatHaveInputName === game.numPlayers) {
             setArrowRowColor();
             game.allNamesFilled = true;
-            // if (game.isPlayer1Turn) {
-            //     setArrowRowColor(game.player1.color);
-            // }
-            // else {
-            //     setArrowRowColor(game.player2.color);
-            // }
         }
     }
     else {
@@ -246,14 +228,15 @@ function numPlayersPress(event) {
 }
 
 function nameSubmit(event) {
-    if ([...event.target.classList].includes('name-submit')) {
-        game.numThatHaveInputName++;
+    let nameInput = event.target.previousElementSibling.value;
+    if ([...event.target.classList].includes('name-submit') && nameInput) {
         if (event.target.parentElement.id === "player1-name-inputs-container") {
-            game.player1.name = event.target.previousElementSibling.value;
+            game.player1.name = nameInput;
         }
         else {
-            game.player2.name = event.target.previousElementSibling.value;
+            game.player2.name = nameInput;
         }
+        game.numThatHaveInputName++;
         renderState();
     }
 }
