@@ -22,36 +22,20 @@ const game = {
     player1: {
         name: '',
         color: 'color-red',
+        allPlacedPieces: [],
+        connectedPieces: [
+            // {  
+            //     pattern: [-1, -1],
+            //     pieces: [],
+            // }
+        ],
     },
     player2: {
         name: '',
         color: 'color-yellow',
+        allPlacedPieces: [],
+        connectedPieces: [],
     },
-    addPiece: function (column) {
-        let colorToAdd = '';
-
-        if (this.isPlayer1Turn) {
-            colorToAdd = this.player1.color;
-        }
-        else {
-            colorToAdd = this.player2.color;
-        }
-        colorToAdd = 'background-' + colorToAdd;
-
-        for (let i = 5; i >= 0; i--) {
-            if (!this.gridState[i][column].contains) {
-                this.gridState[i][column].contains = colorToAdd;
-                if (this.isPlayer1Turn) {
-                    this.isPlayer1Turn = false;
-                }
-                else {
-                    this.isPlayer1Turn = true;
-                }
-                return true;
-            }
-        }
-        return false;
-    }
 }
 
 buildInitialState();
@@ -129,6 +113,133 @@ function onBoardClick() {
     renderState() // show the user the new state
 }
 
+function addPiece(column) {
+    for (let row = 5; row >= 0; row--) {
+        if (!game.gridState[row][column].contains) {
+            if (game.isPlayer1Turn) {
+                addToPairs(game.gridState[row][column], 'player1');    
+                pushPairs(row, column, 'player1');      
+                game.gridState[row][column].contains = 'background-' + game.player1.color;
+                game.player1.allPlacedPieces.push(game.gridState[row][column]);
+                game.isPlayer1Turn = false;
+                if (game.numPlayers === 1) {
+                    compTakesTurn();
+                }
+            }
+            else {      
+                addToPairs(game.gridState[row][column], 'player2');
+                pushPairs(row, column, 'player2');           
+                game.gridState[row][column].contains = 'background-' + game.player2.color;
+                game.player2.allPlacedPieces.push(game.gridState[row][column]);
+                game.isPlayer1Turn = true;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+function pushPairs(row, column, player) {
+    touchingPieces(player, game.gridState[row][column]).forEach(piece => {
+        const newPair = [piece, game.gridState[row][column]];
+        game[player].connectedPieces.push(newPair);
+    });
+    // console.log('game[player].connectedPieces:');       
+    // console.log(game[player].connectedPieces);  
+}
+
+function addToPairs(piece, player) {
+    game[player].connectedPieces.forEach(pair => {
+        if (isInLineWithPair(piece, pair)) {
+            pair.push(piece);
+            // console.log('pair:');
+            // console.log(pair);
+        }
+    });
+
+    // const numPieces = game[player].connectedPieces.length;
+    // for (let i = 0; i < numPieces; i++) {
+    //     if (isInLineWithPair(piece, game[player].connectedPieces[i])) {
+    //         game[player].connectedPieces[i].push(piece);
+    //         console.log('game[player].connectedPieces[i]:');
+    //         console.log(game[player].connectedPieces[i]);
+    //     }
+    // }
+    console.log('game[player].connectedPieces:');
+    console.log(game[player].connectedPieces);
+}
+
+function compTakesTurn() {
+
+}
+
+function isInWinState(player) {
+    let hasWon = false;
+    game[player].connectedPieces.forEach(pieces => {
+        if (pieces.length >= 4) {
+            hasWon = true;
+        }
+    });
+    return hasWon;
+}
+
+// return nested array containing all pieces that are connected in a line
+// function getPiecesConnectedInLine(arrOfPieces) {
+//     if (arrOfPieces.length === 0) {
+
+//     }
+// }
+
+function isInLineWithPair(newPiece, prevPair) {
+    const prevDiffs = differenceBetween(prevPair[0], prevPair[1]);
+    let isInLine = false;
+    // console.log('***');
+    // console.log('prevDiffs:');
+    // console.log(prevDiffs);
+    // console.log('***');
+    // const diffsFrom1st = differenceBetween(newPiece, prevPair[0]);
+    // const diffsFrom2nd = differenceBetween(newPiece, prevPair[1]);
+
+    prevPair.forEach(prevPiece => {
+        const newDiffs = differenceBetween(newPiece, prevPiece);
+        // console.log('newDiffs:');
+        // console.log(newDiffs);
+        if ((newDiffs[0] === prevDiffs[0] && newDiffs[1] === prevDiffs[1]) || 
+        (newDiffs[0] === -1 * prevDiffs[0] && newDiffs[1] === -1 * prevDiffs[1])) {
+            isInLine = true;
+        }
+    });
+    return isInLine;
+}
+
+function touchingPieces(player, newPiece) {
+    const allTouchedPieces = [];
+    game[player].allPlacedPieces.forEach(prevPiece => {
+        if (thesePiecesAreTouching(newPiece, prevPiece)) {
+            allTouchedPieces.push(prevPiece);
+        }
+    });
+    return allTouchedPieces;
+}
+
+// connectedPieces arg must be an array of min length 2
+// function isInLineWith(pieceToAdd, connectedPieces) {
+
+// }
+
+// function isSamePattern() {
+
+// }
+
+function differenceBetween(piece1, piece2) {
+    return [piece1.row - piece2.row, piece1.column - piece2.column];
+}
+
+function thesePiecesAreTouching(piece1, piece2) {
+    const differences = differenceBetween(piece1, piece2);
+    return Math.abs(differences[0]) <= 1 && Math.abs(differences[1]) <= 1;
+}
+
 // render
 function renderState() {
     if (game.numPlayers && !game.numThatHaveInputName) {
@@ -149,6 +260,10 @@ function renderState() {
         if (game.numThatHaveInputName === game.numPlayers) {
             setArrowRowColor();
             game.allNamesFilled = true;
+            // this is probably not the right place for this, I don't think it should be in this function 
+            if (game.numPlayers === 1 && !game.isPlayer1Turn) {
+                compTakesTurn();
+            }
         }
     }
     else {
@@ -185,20 +300,20 @@ function setArrowRowColor() {
     }
     else {
         setArrowRowColorTo(colorClassName);
-    }   
+    }
 }
 
 function setArrowRowColorTo(newColor, colorToReplace) {
     [...arrowRowEl.children].forEach(arrow => {
         [...arrow.children].forEach(component => {
-            if (colorToReplace){
+            if (colorToReplace) {
                 component.classList.replace(colorToReplace, newColor);
             }
             else {
                 component.classList.add(newColor);
             }
         });
-    });    
+    });
 }
 
 // removes name inputs, creates new element containing provided name
@@ -228,7 +343,7 @@ function numPlayersPress(event) {
 }
 
 function nameSubmit(event) {
-    let nameInput = event.target.previousElementSibling.value;
+    const nameInput = event.target.previousElementSibling.value;
     if ([...event.target.classList].includes('name-submit') && nameInput) {
         if (event.target.parentElement.id === "player1-name-inputs-container") {
             game.player1.name = nameInput;
@@ -243,14 +358,14 @@ function nameSubmit(event) {
 
 function arrowClicked(event) {
     const column = event.target.dataset.column;
-    if (column !== undefined) {
-        if (game.addPiece(column)) {
+    if (column !== undefined && game.allNamesFilled) {
+        if (addPiece(column)) {
             renderState();
         }
     }
 }
 
-    // event listeners
-    chooseNumPlayersContainer.addEventListener('click', numPlayersPress);
-    namePlayersContainer.addEventListener('click', nameSubmit);
-    arrowRowEl.addEventListener('click', arrowClicked);
+// event listeners
+chooseNumPlayersContainer.addEventListener('click', numPlayersPress);
+namePlayersContainer.addEventListener('click', nameSubmit);
+arrowRowEl.addEventListener('click', arrowClicked);
