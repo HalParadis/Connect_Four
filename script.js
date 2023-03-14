@@ -23,17 +23,22 @@ const game = {
         name: '',
         color: 'color-red',
         allPlacedPieces: [],
+        notConnectedPieces: [],
         connectedPieces: [
-            // {  
-            //     pattern: [-1, -1],
-            //     pieces: [],
-            // }
+            // [
+            //     {
+            //         row:
+            //         column:
+            //         contains:
+            //     },
+            // ],
         ],
     },
     player2: {
         name: '',
         color: 'color-yellow',
         allPlacedPieces: [],
+        notConnectedPieces: [],
         connectedPieces: [],
     },
 }
@@ -117,21 +122,32 @@ function addPiece(column) {
     for (let row = 5; row >= 0; row--) {
         if (!game.gridState[row][column].contains) {
             if (game.isPlayer1Turn) {
-                addToPairs(game.gridState[row][column], 'player1');    
-                pushPairs(row, column, 'player1');      
+                addToConnectedPieces(game.gridState[row][column], 'player1');    
+                checkAndAddUnconnected('player1');
+                findAndPushPairs(row, column, 'player1');      
                 game.gridState[row][column].contains = 'background-' + game.player1.color;
                 game.player1.allPlacedPieces.push(game.gridState[row][column]);
                 game.isPlayer1Turn = false;
+
+                if (isInWinState('player1')) {
+                    console.log('player 1 has won');
+                }
+
                 if (game.numPlayers === 1) {
                     compTakesTurn();
                 }
             }
             else {      
-                addToPairs(game.gridState[row][column], 'player2');
-                pushPairs(row, column, 'player2');           
+                addToConnectedPieces(game.gridState[row][column], 'player2');
+                checkAndAddUnconnected('player2');
+                findAndPushPairs(row, column, 'player2');           
                 game.gridState[row][column].contains = 'background-' + game.player2.color;
                 game.player2.allPlacedPieces.push(game.gridState[row][column]);
                 game.isPlayer1Turn = true;
+
+                if (isInWinState('player2')) {
+                    console.log('player 2 has won');
+                }
             }
             return true;
         }
@@ -139,35 +155,52 @@ function addPiece(column) {
     return false;
 }
 
-function pushPairs(row, column, player) {
-    touchingPieces(player, game.gridState[row][column]).forEach(piece => {
-        const newPair = [piece, game.gridState[row][column]];
-        game[player].connectedPieces.push(newPair);
-    });
+function findAndPushPairs(row, column, player) {
+    const touchingPieces = getTouchingPieces(player, game.gridState[row][column]);
+    if (touchingPieces.length > 0) {
+        touchingPieces.forEach(piece => {
+            const newPair = [piece, game.gridState[row][column]];
+            game[player].connectedPieces.push(newPair);
+        });
+    }
+    else {
+        game[player].notConnectedPieces.push(game.gridState[row][column]);
+    }
     // console.log('game[player].connectedPieces:');       
     // console.log(game[player].connectedPieces);  
 }
 
-function addToPairs(piece, player) {
-    game[player].connectedPieces.forEach(pair => {
-        if (isInLineWithPair(piece, pair)) {
-            pair.push(piece);
+function addToConnectedPieces(piece, player) {
+    game[player].connectedPieces.forEach(set => {
+        if (isInLineWithPair(piece, set) && !isInSetOfPieces(piece, set)) {
+            set.push(piece);
             // console.log('pair:');
             // console.log(pair);
         }
     });
-
-    // const numPieces = game[player].connectedPieces.length;
-    // for (let i = 0; i < numPieces; i++) {
-    //     if (isInLineWithPair(piece, game[player].connectedPieces[i])) {
-    //         game[player].connectedPieces[i].push(piece);
-    //         console.log('game[player].connectedPieces[i]:');
-    //         console.log(game[player].connectedPieces[i]);
-    //     }
-    // }
-    console.log('game[player].connectedPieces:');
-    console.log(game[player].connectedPieces);
+    // console.log('game[player].connectedPieces:');
+    // console.log(game[player].connectedPieces);
 }
+
+function checkAndAddUnconnected(player) {
+    game[player].notConnectedPieces.forEach(piece => {
+        addToConnectedPieces(piece, player);
+    });
+    // console.log('game[player].connectedPieces:');
+    // console.log(game[player].connectedPieces);
+}
+
+// can make DRYer with ternary operator, assigning return to inArr
+function isInSetOfPieces(newPiece, setOfPieces) {
+    let isInSet = false;
+    setOfPieces.forEach(prevPiece => {
+        if (newPiece.row === prevPiece.row && newPiece.column === prevPiece.column) {
+            isInSet = true;
+        }
+    });
+    return isInSet;
+}
+
 
 function compTakesTurn() {
 
@@ -175,8 +208,8 @@ function compTakesTurn() {
 
 function isInWinState(player) {
     let hasWon = false;
-    game[player].connectedPieces.forEach(pieces => {
-        if (pieces.length >= 4) {
+    game[player].connectedPieces.forEach(set => {
+        if (set.length >= 4) {
             hasWon = true;
         }
     });
@@ -193,17 +226,9 @@ function isInWinState(player) {
 function isInLineWithPair(newPiece, prevPair) {
     const prevDiffs = differenceBetween(prevPair[0], prevPair[1]);
     let isInLine = false;
-    // console.log('***');
-    // console.log('prevDiffs:');
-    // console.log(prevDiffs);
-    // console.log('***');
-    // const diffsFrom1st = differenceBetween(newPiece, prevPair[0]);
-    // const diffsFrom2nd = differenceBetween(newPiece, prevPair[1]);
 
     prevPair.forEach(prevPiece => {
         const newDiffs = differenceBetween(newPiece, prevPiece);
-        // console.log('newDiffs:');
-        // console.log(newDiffs);
         if ((newDiffs[0] === prevDiffs[0] && newDiffs[1] === prevDiffs[1]) || 
         (newDiffs[0] === -1 * prevDiffs[0] && newDiffs[1] === -1 * prevDiffs[1])) {
             isInLine = true;
@@ -212,7 +237,7 @@ function isInLineWithPair(newPiece, prevPair) {
     return isInLine;
 }
 
-function touchingPieces(player, newPiece) {
+function getTouchingPieces(player, newPiece) {
     const allTouchedPieces = [];
     game[player].allPlacedPieces.forEach(prevPiece => {
         if (thesePiecesAreTouching(newPiece, prevPiece)) {
