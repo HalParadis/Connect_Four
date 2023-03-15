@@ -4,7 +4,7 @@ As users playing a two player game we want to:
 [X]    have our order chosen for us by the game
 [X]    take turns by dropping our chip into a column on the grid
 [X]    not be able to drop a chip into a totally filled column
-[ ]    be told when a move causes a player to win, or to draw
+[X]    be told when a move causes a player to win, or to draw
 [ ]    start the game over without having to reset the browser
 
 As a user playing a single player game I additionally want to:

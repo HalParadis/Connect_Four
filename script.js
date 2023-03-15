@@ -9,8 +9,9 @@ const game = {
     numPlayers: 0,
     numThatHaveInputName: 0,
     allNamesFilled: false,
-
     isPlayer1Turn: false,
+    isDraw: false,
+    playerHasWon: '',
 
     gridState: [
         // {
@@ -24,22 +25,14 @@ const game = {
         color: 'color-red',
         allPlacedPieces: [],
         notConnectedPieces: [],
-        connectedPieces: [
-            // [
-            //     {
-            //         row:
-            //         column:
-            //         contains:
-            //     },
-            // ],
-        ],
+        connectedPieceSets: [],
     },
     player2: {
         name: '',
         color: 'color-yellow',
         allPlacedPieces: [],
         notConnectedPieces: [],
-        connectedPieces: [],
+        connectedPieceSets: [],
     },
 }
 
@@ -122,32 +115,25 @@ function addPiece(column) {
     for (let row = 5; row >= 0; row--) {
         if (!game.gridState[row][column].contains) {
             if (game.isPlayer1Turn) {
-                addToConnectedPieces(game.gridState[row][column], 'player1');    
+                addToConnectedPieceSets(game.gridState[row][column], 'player1');    
                 checkAndAddUnconnected('player1');
                 findAndPushPairs(row, column, 'player1');      
                 game.gridState[row][column].contains = 'background-' + game.player1.color;
                 game.player1.allPlacedPieces.push(game.gridState[row][column]);
                 game.isPlayer1Turn = false;
-
-                if (isInWinState('player1')) {
-                    console.log('player 1 has won');
-                }
-
+                updateWinState('player1');
                 if (game.numPlayers === 1) {
                     compTakesTurn();
                 }
             }
             else {      
-                addToConnectedPieces(game.gridState[row][column], 'player2');
+                addToConnectedPieceSets(game.gridState[row][column], 'player2');
                 checkAndAddUnconnected('player2');
                 findAndPushPairs(row, column, 'player2');           
                 game.gridState[row][column].contains = 'background-' + game.player2.color;
                 game.player2.allPlacedPieces.push(game.gridState[row][column]);
                 game.isPlayer1Turn = true;
-
-                if (isInWinState('player2')) {
-                    console.log('player 2 has won');
-                }
+                updateWinState('player2');
             }
             return true;
         }
@@ -160,37 +146,29 @@ function findAndPushPairs(row, column, player) {
     if (touchingPieces.length > 0) {
         touchingPieces.forEach(piece => {
             const newPair = [piece, game.gridState[row][column]];
-            game[player].connectedPieces.push(newPair);
+            game[player].connectedPieceSets.push(newPair);
         });
     }
     else {
         game[player].notConnectedPieces.push(game.gridState[row][column]);
-    }
-    // console.log('game[player].connectedPieces:');       
-    // console.log(game[player].connectedPieces);  
+    } 
 }
 
-function addToConnectedPieces(piece, player) {
-    game[player].connectedPieces.forEach(set => {
-        if (isInLineWithPair(piece, set) && !isInSetOfPieces(piece, set)) {
+function addToConnectedPieceSets(piece, player) {
+    game[player].connectedPieceSets.forEach(set => {
+        if (isInLineWith(piece, set) && !isInSetOfPieces(piece, set)) {
             set.push(piece);
-            // console.log('pair:');
-            // console.log(pair);
         }
     });
-    // console.log('game[player].connectedPieces:');
-    // console.log(game[player].connectedPieces);
 }
 
 function checkAndAddUnconnected(player) {
     game[player].notConnectedPieces.forEach(piece => {
-        addToConnectedPieces(piece, player);
+        addToConnectedPieceSets(piece, player);
     });
-    // console.log('game[player].connectedPieces:');
-    // console.log(game[player].connectedPieces);
 }
 
-// can make DRYer with ternary operator, assigning return to inArr
+// maybe can make DRYer with ternary operator, assigning return to inArr
 function isInSetOfPieces(newPiece, setOfPieces) {
     let isInSet = false;
     setOfPieces.forEach(prevPiece => {
@@ -206,28 +184,25 @@ function compTakesTurn() {
 
 }
 
-function isInWinState(player) {
-    let hasWon = false;
-    game[player].connectedPieces.forEach(set => {
+function updateWinState(player) {
+    const numPiecesOnGrid = game.player1.allPlacedPieces.length + game.player1.allPlacedPieces.length;
+    game[player].connectedPieceSets.forEach(set => {
         if (set.length >= 4) {
-            hasWon = true;
+            game.playerHasWon = player;
         }
     });
-    return hasWon;
+    if (!game[player].hasWon && numPiecesOnGrid === 42) {
+        game.isDraw = true;
+    }
 }
 
-// return nested array containing all pieces that are connected in a line
-// function getPiecesConnectedInLine(arrOfPieces) {
-//     if (arrOfPieces.length === 0) {
-
-//     }
-// }
-
-function isInLineWithPair(newPiece, prevPair) {
-    const prevDiffs = differenceBetween(prevPair[0], prevPair[1]);
+// checks if the difference between the first two pieces in connectedPieces matches the difference between the 
+// new piece and any of the pieces in connectedPieces
+function isInLineWith(newPiece, connectedPieces) {
+    const prevDiffs = differenceBetween(connectedPieces[0], connectedPieces[1]);
     let isInLine = false;
 
-    prevPair.forEach(prevPiece => {
+    connectedPieces.forEach(prevPiece => {
         const newDiffs = differenceBetween(newPiece, prevPiece);
         if ((newDiffs[0] === prevDiffs[0] && newDiffs[1] === prevDiffs[1]) || 
         (newDiffs[0] === -1 * prevDiffs[0] && newDiffs[1] === -1 * prevDiffs[1])) {
@@ -246,15 +221,6 @@ function getTouchingPieces(player, newPiece) {
     });
     return allTouchedPieces;
 }
-
-// connectedPieces arg must be an array of min length 2
-// function isInLineWith(pieceToAdd, connectedPieces) {
-
-// }
-
-// function isSamePattern() {
-
-// }
 
 function differenceBetween(piece1, piece2) {
     return [piece1.row - piece2.row, piece1.column - piece2.column];
@@ -286,6 +252,7 @@ function renderState() {
             setArrowRowColor();
             game.allNamesFilled = true;
             // this is probably not the right place for this, I don't think it should be in this function 
+            // should probably go in onBoardClick
             if (game.numPlayers === 1 && !game.isPlayer1Turn) {
                 compTakesTurn();
             }
@@ -303,7 +270,23 @@ function renderState() {
             }
         }
     }
+    
+    if (game.playerHasWon || game.isDraw) {
+        showWinDraw();
+    }
+}
 
+function showWinDraw() {
+    const messageEl = document.createElement('h2');
+    let message;
+    if (game.playerHasWon) {
+        message = `${game[game.playerHasWon].name} Wins`;
+    }
+    else {
+        message = 'The game is a Draw';
+    }
+    messageEl.innerText = message;
+    document.getElementsByTagName('header')[0].appendChild(messageEl);
 }
 
 // needs more work to make DRY
@@ -368,16 +351,19 @@ function numPlayersPress(event) {
 }
 
 function nameSubmit(event) {
-    const nameInput = event.target.previousElementSibling.value;
-    if ([...event.target.classList].includes('name-submit') && nameInput) {
-        if (event.target.parentElement.id === "player1-name-inputs-container") {
-            game.player1.name = nameInput;
+    const prevSibling = event.target.previousElementSibling;
+    if (prevSibling) {
+        const nameInput = prevSibling.value;
+        if ([...event.target.classList].includes('name-submit') && nameInput) {
+            if (event.target.parentElement.id === "player1-name-inputs-container") {
+                game.player1.name = nameInput;
+            }
+            else {
+                game.player2.name = nameInput;
+            }
+            game.numThatHaveInputName++;
+            renderState();
         }
-        else {
-            game.player2.name = nameInput;
-        }
-        game.numThatHaveInputName++;
-        renderState();
     }
 }
 
