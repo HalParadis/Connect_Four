@@ -2,76 +2,68 @@
 
 const gameGridEl = document.getElementById('game-grid');
 const arrowRowEl = document.getElementById('arrow-row');
+const playAgainButton = document.getElementById('play-again-button');
 const chooseNumPlayersContainer = document.getElementById('choose-num-players-container');
 const namePlayersContainer = document.getElementById('name-players-container');
 
-const game = {
-    numPlayers: 0,
-    numThatHaveInputName: 0,
-    allNamesFilled: false,
-    isPlayer1Turn: false,
-    isDraw: false,
-    playerHasWon: '',
+let game; // = {
+//     numPlayers: 0,
+//     numThatHaveInputName: 0,
+//     allNamesFilled: false,
+//     isPlayer1Turn: false,
+//     isDraw: false,
+//     playerHasWon: '',
+//     finalMoveRendered: false,
 
-    gridState: [
-        // {
-        // row: j,
-        // column: i,
-        // contains: ''
-        // }
-    ],
-    player1: {
-        name: '',
-        color: 'color-red',
-        allPlacedPieces: [],
-        notConnectedPieces: [],
-        connectedPieceSets: [],
-    },
-    player2: {
-        name: '',
-        color: 'color-yellow',
-        allPlacedPieces: [],
-        notConnectedPieces: [],
-        connectedPieceSets: [],
-    },
-}
+//     gridState: [],
+//     player1: {
+//         name: '',
+//         color: 'color-red',
+//         allPlacedPieces: [],
+//         notConnectedPieces: [],
+//         connectedPieceSets: [],
+//     },
+//     player2: {
+//         name: '',
+//         color: 'color-yellow',
+//         allPlacedPieces: [],
+//         notConnectedPieces: [],
+//         connectedPieceSets: [],
+//     },
+// }
 
 buildInitialState();
 renderInitialState();
 
-// adds a row to the game grid html
-function renderRow() {
-    const newRow = document.createElement('div');
-    newRow.classList.add('grid-row', 'display-flex');
-    for (let i = 0; i < 7; i++) {
-        let gridSpace = document.createElement('div');
-        gridSpace.classList.add('grid-space', 'background-color-white');
-        newRow.appendChild(gridSpace);
-    }
-    gameGridEl.appendChild(newRow);
-}
-
-// fill in arrow row
-function makeArrows() {
-    for (let i = 0; i < 7; i++) {
-        const newArrow = document.createElement('div');
-        newArrow.className = 'arrow-down';
-
-        const verticalRectangle = document.createElement('div');
-        verticalRectangle.className = 'vertical-rectangle';
-        verticalRectangle.dataset.column = i;
-
-        const triangleDown = document.createElement('div');
-        triangleDown.className = 'triangle-down';
-        triangleDown.dataset.column = i;
-
-        newArrow.appendChild(verticalRectangle);
-        newArrow.appendChild(triangleDown);
-        arrowRowEl.appendChild(newArrow);
-    }
-}
+//  **************************CHANGE STATE FUNCTIONS*************************************
 
 function buildInitialState() {
+    game = {
+        numPlayers: 0,
+        numThatHaveInputName: 0,
+        allNamesFilled: false,
+        isPlayer1Turn: false,
+        isDraw: false,
+        playerHasWon: '',
+        finalMoveRendered: false,
+    
+        gridState: [],
+        player1: {
+            name: '',
+            color: 'color-red',
+            allPlacedPieces: [],
+            notConnectedPieces: [],
+            connectedPieceSets: [],
+        },
+        player2: {
+            name: '',
+            color: 'color-yellow',
+            allPlacedPieces: [],
+            notConnectedPieces: [],
+            connectedPieceSets: [],
+        },
+    }
+
     for (let j = 0; j < 6; j++) {
         const newRow = [];
         for (let i = 0; i < 7; i++) {
@@ -89,26 +81,8 @@ function buildInitialState() {
     }
 }
 
-// create html elements
-function renderInitialState() {
-    // create arrow row
-    makeArrows();
-
-    // fill in the game grid
-    for (let i = 0; i < 6; i++) {
-        renderRow();
-    }
-}
-
 function resetState() {
-    // reset the game
-}
 
-// maybe a dozen or so helper functions for tiny pieces of the interface
-function onBoardClick() {
-    // update state, maybe with another dozen or so helper functions...
-
-    renderState() // show the user the new state
 }
 
 function addPiece(column) {
@@ -140,6 +114,7 @@ function addPiece(column) {
     }
     return false;
 }
+
 
 function findAndPushPairs(row, column, player) {
     const touchingPieces = getTouchingPieces(player, game.gridState[row][column]);
@@ -212,6 +187,7 @@ function isInLineWith(newPiece, connectedPieces) {
     return isInLine;
 }
 
+// return array of the player's pieces that are touching a given piece
 function getTouchingPieces(player, newPiece) {
     const allTouchedPieces = [];
     game[player].allPlacedPieces.forEach(prevPiece => {
@@ -222,14 +198,18 @@ function getTouchingPieces(player, newPiece) {
     return allTouchedPieces;
 }
 
+// returns array containing both the x and y differences between two pieces
 function differenceBetween(piece1, piece2) {
     return [piece1.row - piece2.row, piece1.column - piece2.column];
 }
 
+// returns true if two given pieces touch
 function thesePiecesAreTouching(piece1, piece2) {
     const differences = differenceBetween(piece1, piece2);
     return Math.abs(differences[0]) <= 1 && Math.abs(differences[1]) <= 1;
 }
+
+//  **************************RENDER FUNCTIONS*************************************
 
 // render
 function renderState() {
@@ -258,7 +238,7 @@ function renderState() {
             }
         }
     }
-    else {
+    else if (!game.finalMoveRendered) {
         setArrowRowColor();
         for (let row = 0; row < 6; row++) {
             let rowEl = gameGridEl.children[row];
@@ -276,6 +256,72 @@ function renderState() {
     }
 }
 
+// create/replace html elements
+function renderInitialState() {
+    // empty grid and arrow row elements
+    gameGridEl.replaceChildren();
+    arrowRowEl.replaceChildren();
+
+    // if there is a game end message remove it
+    const gameEndMessage = document.getElementById('gameEndMessage')
+    if (gameEndMessage) {
+        gameEndMessage.remove();
+    }
+
+    // reset naming elements if possible
+    namePlayersContainer.classList.replace('display-block', 'display-none');
+    chooseNumPlayersContainer.classList.replace('display-none', 'display-flex');
+
+    [...document.getElementsByTagName('span')].forEach(enteredName => enteredName.remove());
+
+    [...document.getElementsByClassName('name-inputs-container')].forEach(nameInputsContainer => nameInputsContainer.classList.replace('display-none', 'display-block'));
+
+    [...document.getElementsByClassName('name-text-input')].forEach(textInput => textInput.value = '');
+
+    // reset play again button if possible
+    playAgainButton.classList.replace('display-block', 'display-none');
+
+    // create arrow row
+    makeArrows();
+
+    // fill in the game grid
+    for (let i = 0; i < 6; i++) {
+        renderRow();
+    }
+}
+
+// adds a row to the game grid html
+function renderRow() {
+    const newRow = document.createElement('div');
+    newRow.classList.add('grid-row', 'display-flex');
+    for (let i = 0; i < 7; i++) {
+        let gridSpace = document.createElement('div');
+        gridSpace.classList.add('grid-space', 'background-color-white');
+        newRow.appendChild(gridSpace);
+    }
+    gameGridEl.appendChild(newRow);
+}
+
+// make arrow row
+function makeArrows() {
+    for (let i = 0; i < 7; i++) {
+        const newArrow = document.createElement('div');
+        newArrow.className = 'arrow-down';
+
+        const verticalRectangle = document.createElement('div');
+        verticalRectangle.className = 'vertical-rectangle';
+        verticalRectangle.dataset.column = i;
+
+        const triangleDown = document.createElement('div');
+        triangleDown.className = 'triangle-down';
+        triangleDown.dataset.column = i;
+
+        newArrow.appendChild(verticalRectangle);
+        newArrow.appendChild(triangleDown);
+        arrowRowEl.appendChild(newArrow);
+    }
+}
+
 function showWinDraw() {
     const messageEl = document.createElement('h2');
     let message;
@@ -286,7 +332,9 @@ function showWinDraw() {
         message = 'The game is a Draw';
     }
     messageEl.innerText = message;
-    document.getElementsByTagName('header')[0].appendChild(messageEl);
+    messageEl.id = 'gameEndMessage';
+    document.getElementsByTagName('header')[0].children[0].insertAdjacentElement('afterend', messageEl);
+    playAgainButton.classList.replace('display-none', 'display-block');
 }
 
 // needs more work to make DRY
@@ -327,12 +375,21 @@ function setArrowRowColorTo(newColor, colorToReplace) {
 // removes name inputs, creates new element containing provided name
 function setName(playerNameSubContainer, nameInput, colorClassName) {
     const nameInputsContainer = playerNameSubContainer.getElementsByClassName('name-inputs-container')[0];
-    nameInputsContainer.classList.add('display-none');
+    nameInputsContainer.classList.replace('display-block','display-none');
     const nameEl = document.createElement('span');
     nameEl.innerText = nameInput;
     nameEl.classList.add(colorClassName);
     playerNameSubContainer.appendChild(nameEl);
     playerNameSubContainer.classList.add('display-flex');
+}
+
+//  **************************EVENT HANDLERS*************************************
+
+// maybe a dozen or so helper functions for tiny pieces of the interface
+function onBoardClick() {
+    // update state, maybe with another dozen or so helper functions...
+
+    renderState() // show the user the new state
 }
 
 // called function when number of players is chosen
@@ -369,14 +426,21 @@ function nameSubmit(event) {
 
 function arrowClicked(event) {
     const column = event.target.dataset.column;
-    if (column !== undefined && game.allNamesFilled) {
+    if (column !== undefined && game.allNamesFilled && !game.finalMoveRendered) {
         if (addPiece(column)) {
             renderState();
+            game.finalMoveRendered = game.playerHasWon || game.isDraw;
         }
     }
 }
 
+function playAgainClicked() {
+    buildInitialState();
+    renderInitialState();
+}
+
 // event listeners
+playAgainButton.addEventListener('click', playAgainClicked);
 chooseNumPlayersContainer.addEventListener('click', numPlayersPress);
 namePlayersContainer.addEventListener('click', nameSubmit);
 arrowRowEl.addEventListener('click', arrowClicked);

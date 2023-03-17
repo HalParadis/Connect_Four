@@ -8,8 +8,9 @@
 </head>
 
 <body>
-    <header>
+    <header class="display-flex">
         <h1>Connect Four</h1>
+        <button id="play-again-button" class="display-none" type="button">Play Again?</button>
     </header>
     <div id="arrow-row" class="arrow-row"></div>
     <div id="game-grid" class="game-grid"></div>
@@ -20,16 +21,16 @@
     </div>
 
     <div id="name-players-container" class="name-players-container display-none">
-        <div id="player-name-sub-container" class="player-name-sub-container">
+        <div id="player-name-sub-container" class="player-name-sub-container display-flex">
             <div class="color-red">Player 1:</div>
-            <div id="player1-name-inputs-container" class="name-inputs-container">
+            <div id="player1-name-inputs-container" class="name-inputs-container display-block">
                 <input class="name-text-input color-black" type="text" placeholder="Enter Name Here"/>
                 <button class="name-submit" type="button">Submit</button>
             </div>
         </div>
-        <div id="player-name-sub-container" class="player-name-sub-container">
+        <div id="player-name-sub-container" class="player-name-sub-container display-flex">
             <div class="color-yellow">Player 2:</div>
-            <div id="player2-name-inputs-container" class="name-inputs-container">
+            <div id="player2-name-inputs-container" class="name-inputs-container display-block">
                 <input class="name-text-input color-black" type="text" placeholder="Enter Name Here"/>
                 <button class="name-submit" type="button">Submit</button>
             </div>
