@@ -6,31 +6,7 @@ const playAgainButton = document.getElementById('play-again-button');
 const chooseNumPlayersContainer = document.getElementById('choose-num-players-container');
 const namePlayersContainer = document.getElementById('name-players-container');
 
-let game; // = {
-//     numPlayers: 0,
-//     numThatHaveInputName: 0,
-//     allNamesFilled: false,
-//     isPlayer1Turn: false,
-//     isDraw: false,
-//     playerHasWon: '',
-//     finalMoveRendered: false,
-
-//     gridState: [],
-//     player1: {
-//         name: '',
-//         color: 'color-red',
-//         allPlacedPieces: [],
-//         notConnectedPieces: [],
-//         connectedPieceSets: [],
-//     },
-//     player2: {
-//         name: '',
-//         color: 'color-yellow',
-//         allPlacedPieces: [],
-//         notConnectedPieces: [],
-//         connectedPieceSets: [],
-//     },
-// }
+let game; 
 
 buildInitialState();
 renderInitialState();
@@ -46,6 +22,7 @@ function buildInitialState() {
         isDraw: false,
         playerHasWon: '',
         finalMoveRendered: false,
+        isActualGame: true,
     
         gridState: [],
         player1: {
@@ -96,7 +73,7 @@ function addPiece(column) {
                 game.player1.allPlacedPieces.push(game.gridState[row][column]);
                 game.isPlayer1Turn = false;
                 updateWinState('player1');
-                if (game.numPlayers === 1) {
+                if (game.numPlayers === 1 && game.isActualGame && !(game.playerHasWon || game.isDraw)) {
                     compTakesTurn();
                 }
             }
@@ -115,6 +92,80 @@ function addPiece(column) {
     return false;
 }
 
+function compTakesTurn() {
+    // const actualGame = JSON.parse(JSON.stringify(game));
+    // const moveWeights = [0, 0, 0, 0, 0, 0, 0];
+    // for (let i = 0; i < 3; i++) {
+    //     moveWeights = checkNextTurnWinLose(moveWeights);
+    //     addPiece(chooseBestMove(moveWeights));
+    //     for (let j = 0; j < 7; j++) {
+
+    //     }
+    // }
+    // game = actualGame;
+
+    // let moveWeights = [0, 0, 0, 0, 0, 0, 0];
+    // moveWeights = checkNextTurnWinLose(moveWeights);
+    // let hasAddedPiece = false;
+    // while (!hasAddedPiece) {
+    //     if (addPiece(chooseBestMove(moveWeights))) {
+    //         hasAddedPiece = true;
+    //         renderState();
+    //         game.finalMoveRendered = game.playerHasWon || game.isDraw;
+    //     }
+    // }
+
+    // let moveWeights = [0, 0, 0, 0, 0, 0, 0];
+    // moveWeights = checkNextTurnWinLose(moveWeights);
+    // console.log('moveWeights:');
+    // console.log(moveWeights);
+
+    const column = Math.floor(Math.random() * 7);
+    if (addPiece(column)) {
+        renderState();
+        game.finalMoveRendered = game.playerHasWon || game.isDraw;
+    }
+    else {
+        compTakesTurn();
+    }
+}
+
+function chooseBestMove(moveWeights) {
+    let highestWeight = 0;
+    let bestMove = Math.floor(Math.random() * 7);
+    moveWeights.forEach((weight, index) => {
+        if (weight > highestWeight) {
+            highestWeight = weight;
+            bestMove = index;
+        }
+    });
+    return bestMove;
+}
+
+function checkNextTurnWinLose(moveWeights) {
+    let actualGame = JSON.parse(JSON.stringify(game));
+    // debugger;
+    game.isActualGame = false;
+    for (let i = 0; i < 7; i++) {
+        addPiece(i);
+        if (game.playerHasWon = 'player2') {
+            moveWeights[i] += 100;
+        }
+        else {
+            let testGame = JSON.parse(JSON.stringify(game));
+            for (let j = 0; j < 7; j++) {
+                addPiece(j);
+                if (game.playerHasWon = 'player1') {
+                    moveWeights[i] -= 100;
+                }
+                game = testGame;
+            }
+        }
+        game = actualGame;
+    }
+    debugger;
+    return moveWeights;
+}
 
 function findAndPushPairs(row, column, player) {
     const touchingPieces = getTouchingPieces(player, game.gridState[row][column]);
@@ -155,9 +206,6 @@ function isInSetOfPieces(newPiece, setOfPieces) {
 }
 
 
-function compTakesTurn() {
-
-}
 
 function updateWinState(player) {
     const numPiecesOnGrid = game.player1.allPlacedPieces.length + game.player1.allPlacedPieces.length;
@@ -252,6 +300,7 @@ function renderState() {
     }
     
     if (game.playerHasWon || game.isDraw) {
+        // debugger;
         showWinDraw();
     }
 }
@@ -428,8 +477,11 @@ function arrowClicked(event) {
     const column = event.target.dataset.column;
     if (column !== undefined && game.allNamesFilled && !game.finalMoveRendered) {
         if (addPiece(column)) {
-            renderState();
-            game.finalMoveRendered = game.playerHasWon || game.isDraw;
+            if (!(game.playerHasWon === 'player2' && game.numPlayers === 1)) {
+                renderState();
+                game.finalMoveRendered = game.playerHasWon || game.isDraw;
+            }
+            
         }
     }
 }

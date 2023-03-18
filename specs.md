@@ -10,7 +10,7 @@ As users playing a two player game we want to:
 As a user playing a single player game I additionally want to:
 
 [X]    see the name 'Computer' displayed as my opponent
-[ ]    have the Computer player choose columns as if it were a human player
+[X]    have the Computer player choose columns as if it were a human player
 
 As a user playing a single player game I would be delighted if:
 
