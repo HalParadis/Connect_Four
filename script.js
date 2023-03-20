@@ -406,7 +406,7 @@ function renderState() {
             game.allNamesFilled = true;
         }
     }
-    else if (!game.finalMoveRendered) {
+    else if (game.allNamesFilled && !game.finalMoveRendered) {
         setArrowRowColor();
         for (let row = 0; row < 6; row++) {
             let rowEl = gameGridEl.children[row];
