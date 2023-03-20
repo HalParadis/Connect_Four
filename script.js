@@ -20,7 +20,6 @@ function buildInitialState() {
         playerHasWon: '',
         finalMoveRendered: false,
         gridIsRendered: false,
-        isActualGame: true,
         needToAddPiece: false,
         columnChosen: undefined,
 
@@ -58,34 +57,52 @@ function buildInitialState() {
     }
 }
 
-function checkNextTurnWin(moveWeights) {
-    let actualGame = JSON.parse(JSON.stringify(game));
+function checkNextTurnWinLose() {
+    const winMoveWeights = [0, 0, 0, 0, 0, 0, 0];
+    const loseMoveWeights = [0, 0, 0, 0, 0, 0, 0];
+    const actualGame = JSON.parse(JSON.stringify(game));
 
     for (let i = 0; i < 7; i++) {
-        game.isActualGame = false;
         addPiece(i);
         if (game.playerHasWon === 'player2') {
-            moveWeights[i] += 100;
+            winMoveWeights[i] += 100;
+        }
+        for (let j = 0; j < 7; j++) {
+            const simGame = JSON.parse(JSON.stringify(game));
+            addPiece(j);
+            if (game.playerHasWon === 'player1') {
+                loseMoveWeights[j] -= 50;
+            }
+            game = JSON.parse(JSON.stringify(simGame));
         }
         game = JSON.parse(JSON.stringify(actualGame));
     }
-    return moveWeights;
+    return [winMoveWeights, loseMoveWeights];
 }
 
-function chooseBestMove(moveWeights) {
-    let highestWeight = 0;
+function chooseBestMove() {
+    const [winMoveWeights, loseMoveWeights] = checkNextTurnWinLose();
+    let referenceWeight = 0;
     let bestMove = Math.floor(Math.random() * 7);
-    moveWeights.forEach((weight, index) => {
-        if (weight > highestWeight) {
-            highestWeight = weight;
+    winMoveWeights.forEach((weight, index) => {
+        if (weight > referenceWeight) {
+            referenceWeight = weight;
             bestMove = index;
         }
     });
+    if (!referenceWeight > 0) {
+        loseMoveWeights.forEach((weight, index) => {
+            if (weight < referenceWeight) {
+                referenceWeight = weight;
+                bestMove = index;
+            }
+        });
+    }
     return bestMove;
 }
 
 function compTakesTurn() {
-    const column = chooseBestMove(checkNextTurnWin([0, 0, 0, 0, 0, 0, 0]));
+    const column = chooseBestMove();
     if (!game.gridState[0][column].contains) {
         game.columnChosen = column;
         game.needToAddPiece = true;
@@ -95,7 +112,6 @@ function compTakesTurn() {
     }
 }
 
-// maybe can make DRYer with ternary operator, assigning return to inArr
 function isInSetOfPieces(newPiece, setOfPieces) {
     let isInSet = false;
     setOfPieces.forEach(prevPiece => {
@@ -189,7 +205,6 @@ function addPieceByCoor(row, column, player) {
     findAndPushPairs(row, column, player);
     game.gridState[row][column].contains = 'background-' + game[player].color;
     game[player].allPlacedPieces.push(game.gridState[row][column]);
-    // maybe change when this function is called
     updateWinState(player);
     if (player === 'player1') {
         game.isPlayer1Turn = false;
@@ -288,7 +303,6 @@ function setArrowRowColorTo(newColor, colorToReplace) {
     });
 }
 
-// needs more work to make DRY
 function setArrowRowColor() {
     let colorClassName = '';
     let oldColorClassName = '';
@@ -323,39 +337,29 @@ function setName(playerNameSubContainer, nameInput, colorClassName) {
 
 // create/replace html elements
 function renderInitialState() {
-    // empty grid and arrow row elements
     gameGridEl.replaceChildren();
     arrowRowEl.replaceChildren();
 
-    // if there is a game end message remove it
     const gameEndMessage = document.getElementById('gameEndMessage')
     if (gameEndMessage) {
         gameEndMessage.remove();
     }
 
-    // reset naming elements if possible
     namePlayersContainer.classList.replace('display-block', 'display-none');
     chooseNumPlayersContainer.classList.replace('display-none', 'display-flex');
-
-    [...document.getElementsByTagName('span')].forEach(enteredName => enteredName.remove());
-
-    [...document.getElementsByClassName('name-inputs-container')].forEach(nameInputsContainer => nameInputsContainer.classList.replace('display-none', 'display-block'));
-
-    [...document.getElementsByClassName('name-text-input')].forEach(textInput => textInput.value = '');
-
-    // reset play again button if possible
     playAgainButton.classList.replace('display-block', 'display-none');
 
-    // create arrow row
+    [...document.getElementsByTagName('span')].forEach(enteredName => enteredName.remove());
+    [...document.getElementsByClassName('name-inputs-container')].forEach(nameInputsContainer => nameInputsContainer.classList.replace('display-none', 'display-block'));
+    [...document.getElementsByClassName('name-text-input')].forEach(textInput => textInput.value = '');
+
     makeArrows();
 
-    // fill in the game grid
     for (let i = 0; i < 6; i++) {
         renderRow();
     }
 }
 
-// render
 function renderState() {
     const playerNameSubContainers = namePlayersContainer.children;
     const player1NameEl = playerNameSubContainers[0];
@@ -400,7 +404,7 @@ function renderState() {
     }
     game.finalMoveRendered = game.playerHasWon || game.isDraw;
 
-    if ((game.playerHasWon || game.isDraw) && game.isActualGame) {
+    if (game.playerHasWon || game.isDraw) {
         showWinDraw();
     }
 }
@@ -442,9 +446,7 @@ function arrowClicked(event) {
     }
 }
 
-// maybe a dozen or so helper functions for tiny pieces of the interface
 function onBoardClick(event) {
-    // update state, maybe with another dozen or so helper functions...
     const clickedEl = event.target;
     const parentClassArray = [...clickedEl.parentElement.classList];
     const classArray = [...clickedEl.classList];
@@ -460,13 +462,8 @@ function onBoardClick(event) {
     else if (clickedEl.id === 'play-again-button') {
         game = undefined;
     }
-    // if (!(game.playerHasWon === 'player2' && game.numPlayers === 1)) {
-    //     renderState();
-    //     game.finalMoveRendered = game.playerHasWon || game.isDraw;
-    // } 
     updateState();
-    renderState();  // show the user the new state
-    // game.finalMoveRendered = game.playerHasWon || game.isDraw;   
+    renderState(); 
 
     if (game.numPlayers === 1 && !game.isPlayer1Turn && game.allNamesFilled && !game.finalMoveRendered) {
         compTakesTurn();
