@@ -14,47 +14,4 @@ As a user playing a single player game I additionally want to:
 
 As a user playing a single player game I would be delighted if:
 
-[ ]    the Computer chooses the correct column for a win, when possible
-
-
-
-
-compTakesTurn comments:
-    // const actualGame = JSON.parse(JSON.stringify(game));
-    // const moveWeights = [0, 0, 0, 0, 0, 0, 0];
-    // for (let i = 0; i < 3; i++) {
-    //     moveWeights = checkNextTurnWinLose(moveWeights);
-    //     addPiece(chooseBestMove(moveWeights));
-    //     for (let j = 0; j < 7; j++) {
-
-    //     }
-    // }
-    // game = actualGame;
-
-    // let moveWeights = [0, 0, 0, 0, 0, 0, 0];
-    // moveWeights = checkNextTurnWinLose(moveWeights);
-    // let hasAddedPiece = false;
-    // while (!hasAddedPiece) {
-    //     if (addPiece(chooseBestMove(moveWeights))) {
-    //         hasAddedPiece = true;
-    //         renderState();
-    //         game.finalMoveRendered = game.playerHasWon || game.isDraw;
-    //     }
-    // }
-
-    // let moveWeights = [0, 0, 0, 0, 0, 0, 0];
-    // moveWeights = checkNextTurnWinLose(moveWeights);
-    // console.log('moveWeights:');
-    // console.log(moveWeights);
-
-addPiece comments:
-    // if (game.numPlayers === 1 && game.isActualGame && !(game.playerHasWon || game.isDraw)) {
-    //     compTakesTurn();
-    // }
-
-renderState comments:
-        // this is probably not the right place for this, I don't think it should be in this function 
-        // should probably go in onBoardClick
-        // if (game.numPlayers === 1 && !game.isPlayer1Turn) {
-        //     compTakesTurn();
-        // }
+[X]    the Computer chooses the correct column for a win, when possible
