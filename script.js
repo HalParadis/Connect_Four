@@ -8,9 +8,6 @@ const namePlayersContainer = document.getElementById('name-players-container');
 
 let game;
 
-buildInitialState();
-renderInitialState();
-
 //  **************************CHANGE STATE FUNCTIONS*************************************
 
 function buildInitialState() {
@@ -22,6 +19,7 @@ function buildInitialState() {
         isDraw: false,
         playerHasWon: '',
         finalMoveRendered: false,
+        gridIsRendered: false,
         isActualGame: true,
         needToAddPiece: false,
         columnChosen: undefined,
@@ -60,6 +58,131 @@ function buildInitialState() {
     }
 }
 
+function checkNextTurnWin(moveWeights) {
+    let actualGame = JSON.parse(JSON.stringify(game));
+
+    for (let i = 0; i < 7; i++) {
+        game.isActualGame = false;
+        addPiece(i);
+        if (game.playerHasWon === 'player2') {
+            moveWeights[i] += 100;
+        }
+        game = JSON.parse(JSON.stringify(actualGame));
+    }
+    return moveWeights;
+}
+
+function chooseBestMove(moveWeights) {
+    let highestWeight = 0;
+    let bestMove = Math.floor(Math.random() * 7);
+    moveWeights.forEach((weight, index) => {
+        if (weight > highestWeight) {
+            highestWeight = weight;
+            bestMove = index;
+        }
+    });
+    return bestMove;
+}
+
+function compTakesTurn() {
+    const column = chooseBestMove(checkNextTurnWin([0, 0, 0, 0, 0, 0, 0]));
+    if (!game.gridState[0][column].contains) {
+        game.columnChosen = column;
+        game.needToAddPiece = true;
+    }
+    else {
+        compTakesTurn();
+    }
+}
+
+// maybe can make DRYer with ternary operator, assigning return to inArr
+function isInSetOfPieces(newPiece, setOfPieces) {
+    let isInSet = false;
+    setOfPieces.forEach(prevPiece => {
+        if (newPiece.row === prevPiece.row && newPiece.column === prevPiece.column) {
+            isInSet = true;
+        }
+    });
+    return isInSet;
+}
+
+function updateWinState(player) {
+    const numPiecesOnGrid = game.player1.allPlacedPieces.length * 2;
+    game[player].connectedPieceSets.forEach(set => {
+        if (set.length >= 4) {
+            game.playerHasWon = player;
+        }
+    });
+    if (!game[player].hasWon && numPiecesOnGrid === 42) {
+        game.isDraw = true;
+    }
+}
+
+// returns array containing both the x and y differences between two pieces
+function differenceBetween(piece1, piece2) {
+    return [piece1.row - piece2.row, piece1.column - piece2.column];
+}
+
+// checks if the difference between the first two pieces in connectedPieces matches the difference between the 
+// new piece and any of the pieces in connectedPieces
+function isInLineWith(newPiece, connectedPieces) {
+    const prevDiffs = differenceBetween(connectedPieces[0], connectedPieces[1]);
+    let isInLine = false;
+
+    connectedPieces.forEach(prevPiece => {
+        const newDiffs = differenceBetween(newPiece, prevPiece);
+        if ((newDiffs[0] === prevDiffs[0] && newDiffs[1] === prevDiffs[1]) ||
+            (newDiffs[0] === -1 * prevDiffs[0] && newDiffs[1] === -1 * prevDiffs[1])) {
+            isInLine = true;
+        }
+    });
+    return isInLine;
+}
+
+function addToConnectedPieceSets(piece, player) {
+    game[player].connectedPieceSets.forEach(set => {
+        if (isInLineWith(piece, set) && !isInSetOfPieces(piece, set)) {
+            set.push(piece);
+        }
+    });
+}
+
+function checkAndAddUnconnected(player) {
+    game[player].notConnectedPieces.forEach(piece => {
+        addToConnectedPieceSets(piece, player);
+    });
+}
+
+// returns true if two given pieces touch
+function thesePiecesAreTouching(piece1, piece2) {
+    const differences = differenceBetween(piece1, piece2);
+    return Math.abs(differences[0]) <= 1 && Math.abs(differences[1]) <= 1;
+}
+
+// return array of the player's pieces that are touching a given piece
+function getTouchingPieces(player, newPiece) {
+    const allTouchedPieces = [];
+    game[player].allPlacedPieces.forEach(prevPiece => {
+        if (thesePiecesAreTouching(newPiece, prevPiece)) {
+            allTouchedPieces.push(prevPiece);
+        }
+    });
+    return allTouchedPieces;
+}
+
+function findAndPushPairs(row, column, player) {
+    const touchingPieces = getTouchingPieces(player, game.gridState[row][column]);
+    if (touchingPieces.length > 0) {
+        touchingPieces.forEach(piece => {
+            const newPair = [piece, game.gridState[row][column]];
+            game[player].connectedPieceSets.push(newPair);
+        });
+    }
+    else {
+        game[player].notConnectedPieces.push(game.gridState[row][column]);
+    }
+}
+
 function addPieceByCoor(row, column, player) {
     addToConnectedPieceSets(game.gridState[row][column], player);
     checkAndAddUnconnected(player);
@@ -91,152 +214,9 @@ function addPiece(column) {
     return false;
 }
 
-function compTakesTurn() {
-    const column = Math.floor(Math.random() * 7);
-    if (!game.gridState[0][column].contains) {
-        game.columnChosen = column;
-        game.needToAddPiece = true;
-    }
-    else {
-        compTakesTurn();
-    }
-}
-
-function chooseBestMove(moveWeights) {
-    let highestWeight = 0;
-    let bestMove = Math.floor(Math.random() * 7);
-    moveWeights.forEach((weight, index) => {
-        if (weight > highestWeight) {
-            highestWeight = weight;
-            bestMove = index;
-        }
-    });
-    return bestMove;
-}
-
-function checkNextTurnWinLose(moveWeights) {
-    let actualGame = JSON.parse(JSON.stringify(game));
-
-    // debugger;
-    for (let i = 0; i < 7; i++) {
-        game.isActualGame = false;
-        // if (game.isActualGame) {
-        //     debugger;
-        // }
-        addPiece(i);
-        if (game.playerHasWon === 'player2') {
-            moveWeights[i] += 100;
-        }
-        // else {
-        //     let testGame = JSON.parse(JSON.stringify(game));
-        //     for (let j = 0; j < 7; j++) {
-        //         addPiece(j);
-        //         if (game.playerHasWon = 'player1') {
-        //             moveWeights[i] -= 100;
-        //         }
-        //         game = testGame;
-        //     }
-        // }
-        game = actualGame;
-    }
-    // debugger;
-    return moveWeights;
-}
-
-function findAndPushPairs(row, column, player) {
-    const touchingPieces = getTouchingPieces(player, game.gridState[row][column]);
-    if (touchingPieces.length > 0) {
-        touchingPieces.forEach(piece => {
-            const newPair = [piece, game.gridState[row][column]];
-            game[player].connectedPieceSets.push(newPair);
-        });
-    }
-    else {
-        game[player].notConnectedPieces.push(game.gridState[row][column]);
-    }
-}
-
-function addToConnectedPieceSets(piece, player) {
-    game[player].connectedPieceSets.forEach(set => {
-        if (isInLineWith(piece, set) && !isInSetOfPieces(piece, set)) {
-            set.push(piece);
-        }
-    });
-}
-
-function checkAndAddUnconnected(player) {
-    game[player].notConnectedPieces.forEach(piece => {
-        addToConnectedPieceSets(piece, player);
-    });
-}
-
-// maybe can make DRYer with ternary operator, assigning return to inArr
-function isInSetOfPieces(newPiece, setOfPieces) {
-    let isInSet = false;
-    setOfPieces.forEach(prevPiece => {
-        if (newPiece.row === prevPiece.row && newPiece.column === prevPiece.column) {
-            isInSet = true;
-        }
-    });
-    return isInSet;
-}
-
-
-
-function updateWinState(player) {
-    const numPiecesOnGrid = game.player1.allPlacedPieces.length * 2;
-    game[player].connectedPieceSets.forEach(set => {
-        if (set.length >= 4) {
-            game.playerHasWon = player;
-        }
-    });
-    if (!game[player].hasWon && numPiecesOnGrid === 42) {
-        game.isDraw = true;
-    }
-}
-
-// checks if the difference between the first two pieces in connectedPieces matches the difference between the 
-// new piece and any of the pieces in connectedPieces
-function isInLineWith(newPiece, connectedPieces) {
-    const prevDiffs = differenceBetween(connectedPieces[0], connectedPieces[1]);
-    let isInLine = false;
-
-    connectedPieces.forEach(prevPiece => {
-        const newDiffs = differenceBetween(newPiece, prevPiece);
-        if ((newDiffs[0] === prevDiffs[0] && newDiffs[1] === prevDiffs[1]) ||
-            (newDiffs[0] === -1 * prevDiffs[0] && newDiffs[1] === -1 * prevDiffs[1])) {
-            isInLine = true;
-        }
-    });
-    return isInLine;
-}
-
-// return array of the player's pieces that are touching a given piece
-function getTouchingPieces(player, newPiece) {
-    const allTouchedPieces = [];
-    game[player].allPlacedPieces.forEach(prevPiece => {
-        if (thesePiecesAreTouching(newPiece, prevPiece)) {
-            allTouchedPieces.push(prevPiece);
-        }
-    });
-    return allTouchedPieces;
-}
-
-// returns array containing both the x and y differences between two pieces
-function differenceBetween(piece1, piece2) {
-    return [piece1.row - piece2.row, piece1.column - piece2.column];
-}
-
-// returns true if two given pieces touch
-function thesePiecesAreTouching(piece1, piece2) {
-    const differences = differenceBetween(piece1, piece2);
-    return Math.abs(differences[0]) <= 1 && Math.abs(differences[1]) <= 1;
-}
-
 function updateState() {
     if (!game) {
         buildInitialState();
-        renderInitialState();
     }
     else if (game.needToAddPiece) {
         if (addPiece(game.columnChosen)) {
@@ -244,10 +224,6 @@ function updateState() {
             game.columnChosen = undefined;
         }
     }
-    // else if (game.numPlayers === 1 && game.isActualGame 
-    //     && !(game.playerHasWon || game.isDraw) && !isPlayer1Turn) {
-    //     compTakesTurn();
-    // }
 }
 
 //  **************************RENDER FUNCTIONS*************************************
@@ -299,6 +275,19 @@ function showWinDraw() {
     playAgainButton.classList.replace('display-none', 'display-block');
 }
 
+function setArrowRowColorTo(newColor, colorToReplace) {
+    [...arrowRowEl.children].forEach(arrow => {
+        [...arrow.children].forEach(component => {
+            if (colorToReplace) {
+                component.classList.replace(colorToReplace, newColor);
+            }
+            else {
+                component.classList.add(newColor);
+            }
+        });
+    });
+}
+
 // needs more work to make DRY
 function setArrowRowColor() {
     let colorClassName = '';
@@ -319,19 +308,6 @@ function setArrowRowColor() {
     else {
         setArrowRowColorTo(colorClassName);
     }
-}
-
-function setArrowRowColorTo(newColor, colorToReplace) {
-    [...arrowRowEl.children].forEach(arrow => {
-        [...arrow.children].forEach(component => {
-            if (colorToReplace) {
-                component.classList.replace(colorToReplace, newColor);
-            }
-            else {
-                component.classList.add(newColor);
-            }
-        });
-    });
 }
 
 // removes name inputs, creates new element containing provided name
@@ -387,7 +363,11 @@ function renderState() {
     const player1SpanEl = player1NameEl.getElementsByTagName('span')[0];
     const player2SpanEl = player2NameEl.getElementsByTagName('span')[0];
 
-    if (game.numPlayers && !game.numThatHaveInputName) {
+    if (!game.gridIsRendered) {
+        renderInitialState();
+        game.gridIsRendered = true;
+    }
+    else if (game.numPlayers && !game.numThatHaveInputName) {
         namePlayersContainer.classList.replace('display-none', 'display-block');
         chooseNumPlayersContainer.classList.replace('display-flex', 'display-none');
         if (game.numPlayers === 1 && !player2SpanEl) {
@@ -427,38 +407,6 @@ function renderState() {
 
 //  **************************EVENT HANDLERS*************************************
 
-// maybe a dozen or so helper functions for tiny pieces of the interface
-function onBoardClick(event) {
-    // update state, maybe with another dozen or so helper functions...
-    const clickedEl = event.target;
-    const parentClassArray = [...clickedEl.parentElement.classList];
-    const classArray = [...clickedEl.classList];
-    if (classArray.includes('num-player-button')) {
-        numPlayersPress(clickedEl);
-    }
-    else if (classArray.includes('name-submit')) {
-        nameSubmit(event);
-    }
-    else if (parentClassArray.includes('arrow-down')) {
-        arrowClicked(event);
-    }
-    else if (clickedEl.id === 'play-again-button') {
-        game = undefined;
-    }
-    // if (!(game.playerHasWon === 'player2' && game.numPlayers === 1)) {
-    //     renderState();
-    //     game.finalMoveRendered = game.playerHasWon || game.isDraw;
-    // } 
-    updateState();
-    renderState();  // show the user the new state
-    // game.finalMoveRendered = game.playerHasWon || game.isDraw;   
-
-    if (game.numPlayers === 1 && !game.isPlayer1Turn && game.allNamesFilled && !game.finalMoveRendered) {
-        compTakesTurn();
-        updateState();
-        renderState();
-    }
-}
 
 // called function when number of players is chosen
 function numPlayersPress(clickedEl) {
@@ -494,8 +442,45 @@ function arrowClicked(event) {
     }
 }
 
+// maybe a dozen or so helper functions for tiny pieces of the interface
+function onBoardClick(event) {
+    // update state, maybe with another dozen or so helper functions...
+    const clickedEl = event.target;
+    const parentClassArray = [...clickedEl.parentElement.classList];
+    const classArray = [...clickedEl.classList];
+    if (classArray.includes('num-player-button')) {
+        numPlayersPress(clickedEl);
+    }
+    else if (classArray.includes('name-submit')) {
+        nameSubmit(event);
+    }
+    else if (parentClassArray.includes('arrow-down')) {
+        arrowClicked(event);
+    }
+    else if (clickedEl.id === 'play-again-button') {
+        game = undefined;
+    }
+    // if (!(game.playerHasWon === 'player2' && game.numPlayers === 1)) {
+    //     renderState();
+    //     game.finalMoveRendered = game.playerHasWon || game.isDraw;
+    // } 
+    updateState();
+    renderState();  // show the user the new state
+    // game.finalMoveRendered = game.playerHasWon || game.isDraw;   
+
+    if (game.numPlayers === 1 && !game.isPlayer1Turn && game.allNamesFilled && !game.finalMoveRendered) {
+        compTakesTurn();
+        updateState();
+        renderState();
+    }
+}
+
 // event listeners
 playAgainButton.addEventListener('click', onBoardClick);
 chooseNumPlayersContainer.addEventListener('click', onBoardClick);
 namePlayersContainer.addEventListener('click', onBoardClick);
 arrowRowEl.addEventListener('click', onBoardClick);
+
+// build starting game
+updateState();
+renderState();
